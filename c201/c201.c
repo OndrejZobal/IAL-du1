@@ -85,7 +85,6 @@ void List_Init( List *list ) {
  * @param list Ukazatel na inicializovanou strukturu jednosměrně vázaného seznamu
  **/
 void List_Dispose( List *list ) {
-	solved = FALSE; /* V případě řešení, smažte tento řádek! */
 	struct ListElement* end  = list->firstElement;
 
 	list->firstElement  = NULL;
@@ -101,6 +100,7 @@ void List_Dispose( List *list ) {
 		end = end->nextElement;
 		free(old_end);
 	}
+	free(end);
 }
 
 /**

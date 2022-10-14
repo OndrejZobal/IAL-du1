@@ -2,7 +2,7 @@ PROJECT=c206
 TESTS=$(PROJECT)-test $(PROJECT)-advanced-test
 PROG=$(PROJECT)-test
 CC=gcc
-CFLAGS=-std=c99 -Wall -Wextra -pedantic -lm -fcommon
+CFLAGS=-std=c99 -g3 -Wall -Wextra -pedantic -lm -fcommon
 
 .PHONY: all run tests clean
 
