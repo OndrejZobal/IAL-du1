@@ -112,18 +112,26 @@ void DLL_Dispose( DLList *list ) {
  * @param data Hodnota k vložení na začátek seznamu
  */
 void DLL_InsertFirst( DLList *list, int data ) {
+	// Creating the element
 	struct DLLElement* new = malloc(sizeof(struct DLLElement));
 	if (new == NULL) {
 		DLL_Error();
 		return;
 	}
 	new->data = data;
+	new->previousElement = NULL;
 
-	new->nextElement = list->firstElement;
-	if (list->firstElement != NULL)  {
+	// Linking the element into the list.
+	if (list->firstElement != NULL) {
 		list->firstElement->previousElement = new;
 	}
+	new->nextElement = list->firstElement;
 	list->firstElement = new;
+
+	// If list was empty, first element will aslo be the last element.
+	if (list->lastElement == NULL) {
+		list->lastElement = new;
+	}
 }
 
 /**
@@ -135,18 +143,22 @@ void DLL_InsertFirst( DLList *list, int data ) {
  * @param data Hodnota k vložení na konec seznamu
  */
 void DLL_InsertLast( DLList *list, int data ) {
+	// Creating the element
 	struct DLLElement* new = malloc(sizeof(struct DLLElement));
 	if (new == NULL) {
 		DLL_Error();
 		return;
 	}
 	new->data = data;
+	new->nextElement = NULL;
 
+	// Linking the element into the list.
+	if (list->lastElement != NULL) list->lastElement->nextElement = new;
 	new->previousElement = list->lastElement;
-	if (list->lastElement != NULL)  {
-		list->lastElement->nextElement = new;
-	}
 	list->lastElement = new;
+
+	// If list was empty, first element will aslo be the last element.
+	if (list->firstElement == NULL) list->firstElement = new;
 }
 
 /**
@@ -223,6 +235,9 @@ void DLL_DeleteFirst( DLList *list ) {
 		// First element doesn't have a previous element.
 		list->firstElement->previousElement = NULL;
 	}
+	if (list->lastElement == delete) {
+		list->lastElement = NULL;
+	}
 	free(delete);
 }
 
@@ -248,6 +263,9 @@ void DLL_DeleteLast( DLList *list ) {
 		// Last element doesn't have a next element.
 		list->lastElement->nextElement = NULL;
 	}
+	if (list->firstElement == delete) {
+		list->firstElement = NULL;
+	}
 	free(delete);
 }
 
@@ -260,6 +278,11 @@ void DLL_DeleteLast( DLList *list ) {
  */
 void DLL_DeleteAfter( DLList *list ) {
 	if (list->activeElement == NULL) {
+		DLL_Error();
+		return;
+	}
+
+	if (list->activeElement == list->lastElement) {
 		return;
 	}
 	if (list->activeElement->nextElement == NULL) {
@@ -267,19 +290,11 @@ void DLL_DeleteAfter( DLList *list ) {
 	}
 
 	struct DLLElement* delete = list->activeElement->nextElement;
+	// Reassing last element if the one we are deleting is the last.
+	if (delete == list->lastElement) list->lastElement = list->activeElement;
+	list->activeElement->nextElement = delete->nextElement;
+	if (delete->nextElement != NULL) delete->nextElement->previousElement = list->activeElement;
 
-	if (delete == list->lastElement) {
-		list->firstElement = delete->previousElement;
-	}
-
-	// Only if there is an Element after deleted element.
-	if (delete->nextElement != NULL) {
-		list->activeElement->nextElement = delete->nextElement;
-		delete->nextElement->previousElement = list->activeElement;
-	}
-	else {
-		list->activeElement->nextElement = NULL;
-	}
 	free(delete);
 }
 
@@ -292,29 +307,25 @@ void DLL_DeleteAfter( DLList *list ) {
  */
 void DLL_DeleteBefore( DLList *list ) {
 	if (list->activeElement == NULL) {
+		DLL_Error();
+		return;
+	}
+
+	if (list->activeElement == list->firstElement) {
 		return;
 	}
 	if (list->activeElement->previousElement == NULL) {
 		return;
 	}
 
-	struct DLLElement* delete = list->activeElement->nextElement;
+	struct DLLElement* delete = list->activeElement->previousElement;
+	// Reassing first element if the one we are deleting is the first.
+	if (delete == list->firstElement) list->firstElement = list->activeElement;
+	list->activeElement->previousElement = delete->previousElement;
+	if (delete->previousElement != NULL) delete->previousElement->nextElement = list->activeElement;
 
-	if (delete == list->firstElement) {
-		list->firstElement = delete->nextElement;
-	}
-
-	// Only if there is an Element before deleted element.
-	if (delete->previousElement != NULL) {
-		list->activeElement->previousElement = delete->previousElement;
-		delete->previousElement->nextElement = list->activeElement;
-	}
-	else {
-		list->activeElement->previousElement = NULL;
-	}
 	free(delete);
 }
-
 /**
  * Vloží prvek za aktivní prvek seznamu list.
  * Pokud nebyl seznam list aktivní, nic se neděje.
@@ -345,6 +356,10 @@ void DLL_InsertAfter( DLList *list, int data ) {
 	// Relinking active element.
 	list->activeElement->nextElement = new;
 	new->previousElement = list->activeElement;
+
+	if (list->activeElement == list->lastElement) {
+		list->lastElement = new;
+	}
 }
 
 /**
@@ -377,6 +392,10 @@ void DLL_InsertBefore( DLList *list, int data ) {
 	// Relinking active element.
 	list->activeElement->previousElement = new;
 	new->nextElement = list->activeElement;
+
+	if (list->activeElement == list->firstElement) {
+		list->firstElement = new;
+	}
 }
 
 /**
@@ -425,7 +444,6 @@ void DLL_Next( DLList *list ) {
 
 	list->activeElement = list->activeElement->nextElement;
 }
-
 
 /**
  * Posune aktivitu na předchozí prvek seznamu list.
